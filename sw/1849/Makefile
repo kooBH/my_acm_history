@@ -2,7 +2,7 @@
 .SUFFIXES : .cpp .o
 
 #Macro for objects
-OBJ = main.cpp  
+OBJ = DisjointSetOnly.cpp  
 
 #output file
 TARGET = a 
