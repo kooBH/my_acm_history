@@ -2,78 +2,166 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
+#include <array>
 #include <algorithm>
+#include <deque>
+#include <iostream>
 
 int deci[6] ={1,10,100,1000,10000,100000};
+//#define DEBUG
+
+void num2deci(int n,std::array<int,6> d){
+    int t=n;
+    int length=0;
+    while(t){
+            d[5-length]=t%10;
+            t/=10;
+            length++;
+        }
+}
+void deci2num(std::array<int,6> d,int& n){
+    n=0;
+    for(int i=0;i<6;i++){
+            n+=d[i]*deci[5-i];
+    }
+}
+
+void print(std::array<int,6> d){
+    for(auto i : d){
+        printf("%d",i);
+    }
+    printf("\n");
+}
 
 int main(){
     int nTest = 0;
     int board = 0;
     int nChange = 0;
     int length = 0;
-    int numbers[6];
+    std::array<int,6> numbers;
+    int biggest;
+    int fakeChange;
+
+    std::deque<std::array<int,6>> cases;
 
     scanf("%d", &nTest);
     for(int i=0;i<nTest;i++){
         // input
         scanf("%d %d",&board,&nChange);
+        
+        // init
+        for(int j=0;j<6;j++)
+            numbers[j]=0;
         int t=board;
         length = 0;
+        biggest = 0;
+        fakeChange=0;
         while(t){
-            numbers[length]=t%10;
+            numbers[5-length]=t%10;
             t/=10;
             length++;
         }
-        /*
-        printf("input : ");
-        for(int j=length-1;j>=0;j--)
-            printf("%d",numbers[j]);
-        printf("\n");
-        */
+#ifdef DEBUG
+        printf("# Do : ");print(numbers);
+#endif
+       cases.push_back(numbers);
 
         for(int j=0;j<nChange;j++){
-            int target_idx = length-j-1;
+            int target_idx = 6-length+j;
             int big_v = numbers[target_idx];
             int big_idx = target_idx;
             bool swaped  =false;
 
-            if(j > length){
-                if(j%2==0)
+#ifdef DEBUG
+            printf("---change : %d of %d at %d with %d---\n",j,nChange,target_idx,fakeChange);
+#endif
+
+            // Chance to change is larger than length
+            if(j > length ){
+                if((nChange-j)%2==0){
+#ifdef DEBUG
+                    printf("pass\n");
+#endif
                     break;
+                    }
                 else{
-                    int t_v = numbers[1];
-                    numbers[1] = numbers[0];
-                    numbers[0] = numbers[1];
+                    int nCase = cases.size(); 
+                    for(int k=0;k<nCase;k++){
+                        for(int l=6-length;l<5;l++){
+                            std::array<int,6> t_a;
+                            t_a = cases.front();
+                            int t_v = t_a[l+1];
+                            t_a[l+1] = t_a[l];
+                            t_a[l] = t_v;
+                            cases.push_back(t_a);
+#ifdef DEBUG
+                            printf("push 1 : ");print(t_a);
+#endif
+                        }
+                        cases.pop_front();
+                    }
                     continue;
                 }
             }
-            for(int k=target_idx-1;k>=0;k--){
-                //printf("%d > %d | %d %d\n",numbers[k],big_v,k,big_idx);
-                if(numbers[k] >= big_v){
-                    big_v = numbers[k];
-                    big_idx=k;
-                    swaped=true;
-                }
-            }
-            if(swaped){
-                //printf("swap %d %d\n",numbers[target_idx],numbers[big_idx]);
-                int t_v = numbers[target_idx];
-                numbers[target_idx] = big_v;
-                numbers[big_idx]  = t_v;
-                /*
-                printf("swap : ");
-                for(int ii=length-1;ii>=0;ii--)
-                    printf("%d",numbers[ii]);
-                printf("\n");
-                */
 
+            int nCase = cases.size(); 
+            for(int k=0;k<nCase;k++){
+                int t_n;
+                std::array<int,6> t_a;
+                t_a = cases.front();
+                big_v = t_a[target_idx];
+#ifdef DEBUG
+                printf("Search for : ");print(t_a);
+#endif
+                // find biggest number
+                for(int l=target_idx+1;l<6;l++){
+                    if(t_a[l] > big_v){
+                        big_v = t_a[l];
+                        big_idx=l;
+                        swaped=true;
+                    }
+                }
+                //need to swap
+                if(swaped){
+                    //swap
+#ifdef DEBUG
+                    printf("swap : %d\n",big_v);
+#endif
+                    for(int l = target_idx;l<6;l++){
+                        if(t_a[l]==big_v){
+                            t_a = cases.front();
+                            int t_v = t_a[target_idx];
+                            t_a[target_idx] = t_a[l];
+                            t_a[l]  = t_v;
+                            deci2num(t_a,t_v);
+                            cases.push_back(t_a);
+#ifdef DEBUG
+                            printf("push 2 : ");print(t_a);
+#endif
+                        }
+                    }
+                    cases.pop_front();
+                }
+                else{
+                    nChange++;
+                    fakeChange++;
+                }
             }
         }
 
-        printf("#%d ",i+1);
-        for(int j=length-1;j>=0;j--)
-            printf("%d",numbers[j]);
-        printf("\n");
+        int nCase = cases.size(); 
+        for(int k=0;k<nCase;k++){
+            int t_v;
+            std::array<int,6> t_a;
+            t_a = cases.front();
+            deci2num(t_a,t_v);
+            if(t_v > biggest)
+                biggest = t_v;
+            cases.pop_front();
+        }
+        printf("#%d %d\n",i+1,biggest);
+        cases.clear();
     }   
     return 0;
 }
