@@ -1,2 +1,7 @@
 build/
 *.swp
+*.txt
+*.exe
+*.out
+
+.vscode
